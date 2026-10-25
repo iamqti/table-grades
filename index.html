@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self' https://node-server.ru; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"
+    />
+    <title>Таблица оценок | node-server.ru</title>
+
+    <style>
+      :root {
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: #4a2535;
+        background: #fff0f3;
+        line-height: 1.65;
+        font-synthesis: none;
+
+        --accent: #c9184a;
+        --accent-hover: #a8123d;
+        --accent-light: #ffe3ea;
+        --muted: #8b5967;
+        --border: #f3d4dd;
+        --card: #fff8fa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        min-height: 100%;
+        margin: 0;
+      }
+
+      button,
+      input {
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .course {
+        width: min(100%, 760px);
+        margin: 0 auto;
+        padding: 32px 24px 48px;
+      }
+
+      .course-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .author-chip {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #ff8fab, var(--accent));
+        color: #fff;
+        font-weight: 700;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+
+      .tag {
+        display: inline-block;
+        margin: 0 0 10px;
+        padding: 3px 12px;
+        border-radius: 999px;
+        background: var(--accent-light);
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(20px, 3.2vw, 28px);
+        font-weight: 650;
+        line-height: 1.3;
+        letter-spacing: -0.03em;
+      }
+
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+        margin: 8px 0 0;
+      }
+
+      h2 {
+        margin: 0 0 16px;
+        font-size: 18px;
+        font-weight: 650;
+        letter-spacing: -0.02em;
+      }
+
+      .card {
+        margin: 0 0 20px;
+        padding: 24px;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--card);
+      }
+
+      label.field {
+        display: block;
+        margin: 16px 0 6px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      label.field:first-of-type {
+        margin-top: 0;
+      }
+
+      input[type="text"],
+      input[type="password"] {
+        display: block;
+        box-sizing: border-box;
+        width: 100%;
+        padding: 11px 14px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: #4a2535;
+      }
+
+      input:focus-visible {
+        outline: 3px solid #f4a7c0;
+        outline-offset: 2px;
+      }
+
+      button {
+        display: block;
+        margin-top: 20px;
+        min-height: 44px;
+        padding: 10px 22px;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        color: #fff;
+        background: var(--accent);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.15s;
+      }
+
+      button:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: wait;
+      }
+
+      button:focus-visible {
+        outline: 3px solid #f4a7c0;
+        outline-offset: 3px;
+      }
+
+      output {
+        display: block;
+        margin-top: 16px;
+        font-size: 14px;
+        font-weight: 600;
+        min-height: 1.4em;
+      }
+
+      output.error {
+        color: #b23a3a;
+      }
+
+      output.success {
+        color: #2e7d4f;
+      }
+
+      #grades-output {
+        margin-top: 8px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 12px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        font-weight: 600;
+        background: var(--accent-light);
+      }
+
+      .hint {
+        margin: 24px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      @media (max-width: 600px) {
+        .course {
+          padding: 24px 16px 36px;
+        }
+
+        th,
+        td {
+          padding: 8px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="course">
+      <header class="course-header">
+        <div class="author-chip">МШ</div>
+        <div class="header-text">
+          <p class="tag">Web Services + Moodle</p>
+          <h1>Таблица оценок node-server.ru</h1>
+          <p class="muted">
+            Вы вводите логин и пароль от своей учётной записи Moodle. Браузер
+            напрямую обращается к node-server.ru — пароль и токен никуда,
+            кроме Moodle, не отправляются и не сохраняются.
+          </p>
+        </div>
+      </header>
+
+      <main>
+        <section class="card">
+          <form id="grades-form">
+            <label class="field" for="username">Логин</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autocomplete="username"
+              required
+            />
+
+            <label class="field" for="password">Пароль</label>
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+
+            <button type="submit">Показать оценки</button>
+            <output id="status" aria-live="polite"></output>
+          </form>
+        </section>
+
+        <div id="grades-output"></div>
+
+        <p class="hint">
+          Используются функции Web Services:
+          <code>core_webservice_get_site_info</code>,
+          <code>core_enrol_get_users_courses</code>,
+          <code>gradereport_user_get_grade_items</code>.
+        </p>
+      </main>
+    </div>
+
+    <script>
+      const form = document.querySelector('#grades-form');
+      const status = document.querySelector('#status');
+      const output = document.querySelector('#grades-output');
+
+      async function moodleRequest(path, params, stage) {
+        let response;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            response = await fetch('https://node-server.ru/m' + path, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: new URLSearchParams(params),
+              redirect: 'manual',
+              cache: 'no-store'
+            });
+            break;
+          } catch {
+            if (attempt === 1) {
+              throw new Error('Связь с Moodle прервалась на шаге «' + stage + '». Попробуйте ещё раз.');
+            }
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+        }
+        if (response.type === 'opaqueredirect' || (response.status >= 300 && response.status < 400)) {
+          throw new Error('Moodle перенаправил запрос. Проверьте адрес сайта.');
+        }
+        if (!response.ok) {
+          throw new Error('Moodle вернул HTTP ' + response.status + ' на шаге «' + stage + '».');
+        }
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error('Moodle вернул нечитаемый ответ на шаге «' + stage + '».');
+        }
+        if (data?.errorcode === 'invalidlogin') {
+          throw new Error('Moodle отклонил вход через API. Проверьте логин и пароль.');
+        }
+        if (data?.errorcode === 'enablewsdescription') {
+          throw new Error('В этом Moodle отключены Web Services. Нужен администратор сайта.');
+        }
+        if (data?.exception || data?.error) {
+          throw new Error(data.message || data.error || 'Moodle отклонил запрос.');
+        }
+        return data;
+      }
+
+      async function api(token, method, params = {}) {
+        return moodleRequest('/webservice/rest/server.php', {
+          wstoken: token,
+          wsfunction: method,
+          moodlewsrestformat: 'json',
+          ...params
+        }, method);
+      }
+
+      function addCell(row, tag, value) {
+        const cell = document.createElement(tag);
+        cell.textContent = String(value ?? '—').replace(/<[^>]*>/g, '').replace(/&ndash;/g, '–').replace(/&nbsp;/g, ' ');
+        row.append(cell);
+      }
+
+      function showCourse(course, items) {
+        const section = document.createElement('section');
+        section.className = 'card';
+        const title = document.createElement('h2');
+        title.textContent = String(course.fullname || 'Курс');
+        section.append(title);
+        const wrap = document.createElement('div');
+        wrap.className = 'table-wrap';
+        const table = document.createElement('table');
+        const head = document.createElement('tr');
+        for (const name of ['Элемент', 'Оценка', 'Диапазон']) addCell(head, 'th', name);
+        table.append(head);
+        for (const item of items.filter(item => item.itemtype === 'mod' || item.itemtype === 'course')) {
+          const row = document.createElement('tr');
+          for (const value of [
+            item.itemname || (item.itemtype === 'course' ? 'Итог по курсу' : 'Без названия'),
+            item.gradeformatted,
+            item.rangeformatted
+          ]) addCell(row, 'td', value);
+          table.append(row);
+        }
+        wrap.append(table);
+        section.append(wrap);
+        output.append(section);
+      }
+
+      form.addEventListener('submit', async event => {
+        event.preventDefault();
+        const button = form.querySelector('button');
+        button.disabled = true;
+        output.replaceChildren();
+        status.className = '';
+        status.textContent = 'Загружаем оценки…';
+        try {
+          const username = form.elements.namedItem('username').value.trim();
+          const password = form.elements.namedItem('password').value;
+          const issued = await moodleRequest('/login/token.php?service=moodle_mobile_app', { username, password }, 'вход');
+          const token = issued.token;
+          if (!/^[a-zA-Z0-9]{16,256}$/.test(String(token || ''))) {
+            throw new Error('Moodle не выдал подходящий токен.');
+          }
+          const site = await api(token, 'core_webservice_get_site_info');
+          const courses = await api(token, 'core_enrol_get_users_courses', { userid: site.userid });
+          if (!Array.isArray(courses)) throw new Error('Moodle не вернул список курсов.');
+          let shown = 0;
+          let firstReportError = null;
+          for (const course of courses.slice(0, 30)) {
+            try {
+              const report = await api(token, 'gradereport_user_get_grade_items', { courseid: course.id, userid: site.userid });
+              const items = report?.usergrades?.[0]?.gradeitems;
+              if (!Array.isArray(items) || !items.some(item => item.itemtype === 'mod' || item.itemtype === 'course')) continue;
+              showCourse(course, items);
+              shown++;
+            } catch (error) {
+              firstReportError ??= error;
+            }
+          }
+          if (courses.length && shown === 0 && firstReportError) throw firstReportError;
+          status.className = 'success';
+          status.textContent = shown
+            ? 'Курсов с оценками: ' + shown + '. Данные для входа не сохранены.'
+            : 'Доступных оценок пока нет.';
+        } catch (error) {
+          status.textContent = 'Не удалось получить оценки: ' + (error.message || 'Неизвестная ошибка.');
+          status.className = 'error';
+        } finally {
+          form.elements.namedItem('password').value = '';
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
